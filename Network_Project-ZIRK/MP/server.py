@@ -140,7 +140,6 @@ class serverFrame(wx.Frame):
         while not self.quitting:
             msg = client.recv(1024)
             msg = msg.decode()
-            print("BE ")
             silent = 0
 
             # CASE: NEW CLIENT CONNECTS
@@ -158,6 +157,7 @@ class serverFrame(wx.Frame):
                     msg = name + " has joined Zirk chat"
             # CASE: NEW CLIENT WANTS TO INITIALIZE LIST OF ACTIVE USERS
             elif "@@initlist " in msg and " -> " not in msg:
+                print(msg + "BGKIUAUFHNAIDJ")
                 name = msg.split("@@initlist ")[1]
                 receiver = name
                 #print(name + "MY NAME IS HERE")
@@ -166,14 +166,13 @@ class serverFrame(wx.Frame):
                     msg = "@@initlist" 
                     for group in self.groupchats:
                         if name in self.groupchats[group]:
-                            print("HER BEST")
                             for member in self.groups[name]:
-                                print("FRIEND ONLY")
                                 msg = msg + " " + member
                     group.send(msg.encode())
                                 #print("MESSAGE SENT TO INITIALIZE GROUP CHAT: " + name + " MEMBER " + member)
                 else:
                     msg = "@@initlist "
+                time.sleep(.1)
             # CASE: CLIENT SENDS FILE
             elif "sendfile@@" in msg:
                 name = msg.split(" -> ")[0]
@@ -251,6 +250,8 @@ class serverFrame(wx.Frame):
                     msg = owner + " Created chat room @@" + str(self.port) + "@@"+ groupname 
                     self.broadcast(msg, owner, "Global")
                 silent = 1
+            #elif "@@checkpassword"
+            
             # CASE: NORMAL MESSAGE
             elif " -> " in msg:
                 name = msg.split(" -> ")[0]
@@ -289,12 +290,9 @@ class serverFrame(wx.Frame):
                         del self.clients[client]
                         del self.addresses[client]
                         break
-                print("ABOUT TO ENTER")
                 # TEMPORARY DICTIONARY TO HOLD NEW LIST OF USERS PER GROUP
                 tempdict = {}
                 for group in self.groupchats:
-                    print("ENTERED")
-                    print(group)
                     address = ""
                     for member in self.groups[self.groupchats[group].split(":")[0]]:
                         print(member + " HERE")
@@ -340,6 +338,9 @@ class serverFrame(wx.Frame):
                         for i in self.clients:
                             client.send((msg + self.clients[i]).encode())
                             print(str(msg) + " SENT FROM SERVER")
+                            time.sleep(.1)
+                        for i in self.chatRooms.keys():
+                            client.send((msg + i + " @chatroom").encode())
                             time.sleep(.1)
                         break
             else:

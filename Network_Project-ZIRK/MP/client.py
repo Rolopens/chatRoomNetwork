@@ -181,7 +181,6 @@ class grpChatTab(wx.Panel):
 
     def initList(self):
         # SENDS REQUEST TO SERVER TO INITIALIZE LIST WITH ONLINE USERS
-        print("FOR YOU AND HER BOTH")
         self.s.send(("@@initlist " + self.chatMate).encode('utf-8'))
         time.sleep(.1)
         
@@ -260,12 +259,9 @@ class grpChatTab(wx.Panel):
                     self.chatOptions.remove(name)
                 elif " -> " not in data and "@@initlist " in data:
                     silent = 1
-                    print("ITS HARD ")
                     for i in range(1,len(data.split(" "))):
                         name = data.split(" ")[i]
-                        print("BUT ")
                         if name not in self.chatOptions:
-                            print("YOU GOT TO DO IT")
                             self.list.Append(name)
                             self.chatOptions.append(name)
                 elif " -> " not in data and "sendfile@@" in data:
@@ -366,6 +362,8 @@ class MainTab(wx.Panel):
         self.btnChatroom.Bind(wx.EVT_BUTTON, self.createChatroom)
         #self.btnChatroom.Hide()
 
+        self.chatRooms = []
+
     def setAlias(self, name):
         # SETS ALIAS AND OTHER AESTHETIC STUFF
         self.userName = name
@@ -441,6 +439,14 @@ class MainTab(wx.Panel):
             self.filter(self.chatMate)
             #self.btnChatroom.Hide()
             self.btnGrpchat.Hide()
+            if self.chatMate in self.chatRooms:
+                passwordTry = wx.TextEntryDialog(None, "Enter password of Chat room", "Password", '')
+                if passwordTry.ShowModal() == wx.ID_OK:
+                    temp = passwordTry.GetValue()
+                    self.s.send((self.alias+"@@checkpassword@@"+self.chatMate+"@@"+temp).encode())
+                    print("@@checkpassword@@"+self.chatMate+"@@"+temp)
+
+
         elif type(self.chatMate) is list and "Global" not in self.chatMate and len(self.chatMate) > 1:
             #self.btnChatroom.Show()
             self.btnGrpchat.Show()
@@ -520,12 +526,18 @@ class MainTab(wx.Panel):
                     name = data.split(" has ")[0]
                     self.deleteInList(name)
                     self.chatOptions.remove(name)
-                elif " -> " not in data and "@@initlist " in data:
+                elif " -> " not in data and "@@initlist " in data and "@chatroom" not in data:
                     silent = 1
                     name = data.split(" ")[1]
                     if name not in self.chatOptions:
                         self.list.Append(name)
                         self.chatOptions.append(name)
+                elif " -> " not in data and "@@initlist " in data and "@chatroom" in data:
+                    silent = 1
+                    name = data.split(" ")[1]
+                    if name not in self.chatOptions:
+                        self.list.Append(name)
+                        self.chatRooms.append(name)
                 elif " -> " not in data and "sendfile@@" in data:
                     filename = data.split("@@")[1]
                     filesize = float(data.split("@@")[2])
@@ -557,10 +569,11 @@ class MainTab(wx.Panel):
                     self.rT.join()
                 elif " -> " not in data and " Created chat room " in data:
                     chatname = data.split("@@")[2]
-                    self.chatOptions.append(chatname)
+                    #self.chatOptions.append(chatname)
                     self.list.Append(chatname)
+                    self.chatRooms.append(chatname)
                     data = data.split(" ")[0] + " Created chat room " + chatname
-
+                
                 if not silent:
                     self._logAll += str(data) + "\n"
                     self.log.AppendText(str(data) + "\n")
@@ -764,6 +777,7 @@ class client(wx.Frame):
         client.setAlias(name)
         client.connect()
         client.initList()
+
 
 def main():
     clientApp = wx.App()
