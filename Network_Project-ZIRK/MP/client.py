@@ -67,7 +67,7 @@ class chtRoomTab(wx.Panel):
         # SENDS INITIAL CONNECTION MESSAGE TO SERVER
         self.alias = alias
         self.chatMate = groupName
-        self.s.send(("@@connected " + groupName+":"+alias).encode('utf-8'))
+        self.s.send(("@@chatroom@@connected " + groupName+":"+alias).encode('utf-8'))
 
         self.defaultLog = "USER LOG:    " + self.alias +" -> "+self.chatMate+ "\n"
         self.log.SetValue(self.defaultLog)
@@ -94,7 +94,7 @@ class chtRoomTab(wx.Panel):
             try:
                 if self.s.send((sender + " -> " + receiver + ": " + message).encode()):
                     print(message)
-                    print("MASSAGE SENT")
+                    print("MASSAGE SENT ")
                 time.sleep(.1)
             except:
                 pass
@@ -118,7 +118,7 @@ class chtRoomTab(wx.Panel):
 
             filesize = os.path.getsize(filename)
             print(file)
-            message = "sendfilegrp@@"+file+"@@"+str(filesize)
+            message = "sendfilechat@@"+file+"@@"+str(filesize)
 
             # SENDS FILE NAME AND SIZE TO PREPARE FOR FILE TRANSFER
             self.s.send((sender + " -> " + receiver + ": " + message).encode('utf-8'))
@@ -151,13 +151,15 @@ class chtRoomTab(wx.Panel):
                     name = data.split(" has ")[0]
                     self.deleteInList(name)
                     self.chatOptions.remove(name)
-                elif " -> " not in data and "@@initlist " in data:
+                elif " -> " not in data and "@@initchatroomlist " in data:
                     silent = 1
-                    for i in range(1,len(data.split(" "))):
-                        name = data.split(" ")[i]
+                    names = data.split("@@initchatroomlist ")[1].split("@@")
+                    for i in range(1,len(data.split("@@initchatroomlist ")[1].split("@@"))):
+                        name = data.split("@@initchatroomlist ")[1].split("@@")[i]
                         if name not in self.chatOptions:
                             self.list.Append(name)
                             self.chatOptions.append(name)
+                            self.log.AppendText(name + " joined the room" + "\n")
                 elif " -> " not in data and "sendfileroom@@" in data:
                     filename = data.split("@@")[1]
                     filesize = float(data.split("@@")[2])
@@ -180,10 +182,14 @@ class chtRoomTab(wx.Panel):
                     print("[+] File downloaded! CLIENT SIDE")
                     data = "Received " + filename + " of size " + str(filesize) + " bytes" 
 
+                elif "@@initlist" in data:
+                    silent = 1
+
                 if not silent:
                     self.log.AppendText(str(data) + "\n")
 
-            except:
+            except Exception as e:
+                print(str(e))
                 break
 
     def deleteInList(self, name):
@@ -723,7 +729,10 @@ class MainTab(wx.Panel):
                     
                     # KILL THE THREAD!
                     self.rT.join()
-                    
+                    '''
+                else:
+                    silent = 1
+                    '''
 
                 if not silent:
                     self._logAll += str(data) + "\n"
